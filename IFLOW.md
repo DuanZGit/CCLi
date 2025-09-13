@@ -2,15 +2,10 @@
 
 ## 项目概述
 
-CCLi (Claude Code CLI) 是一个智能个人助理系统，集成了以下核心功能：
+CCLi (Claude Code CLI) 是一个专注于两个核心功能的AI系统：
 
 1. **智能模型路由系统**：支持多模型提供商路由，根据任务类型自动选择最优模型
-2. **Claude Code集成**：集成Claude Code的核心功能，包括代码分析、文档生成、任务规划等
-3. **个人助理Agent团队**：包含新闻播报员、日程规划师和复盘导师
-4. **个人画像系统**：记录用户兴趣、习惯和目标
-5. **事件记录系统**：自动记录重要事件
-6. **知识图谱**：连接信息与洞察
-7. **双界面支持**：CLI界面和Web UI界面
+2. **中文UI界面**：提供命令行和Web两种中文用户界面，方便用户交互
 
 ## 项目结构
 
@@ -21,10 +16,6 @@ CCLi/
 │   ├── event_logger.py      # 事件记录系统
 │   ├── knowledge_graph.py   # 知识图谱
 │   └── model_router.py      # 模型路由系统
-├── agents/                  # Agent模块
-│   ├── xun_xiao_zhi.py      # 新闻播报员
-│   ├── shi_xiao_guan.py     # 日程规划师
-│   └── wu_xiao_dao.py       # 复盘导师
 ├── integrations/            # 集成模块
 │   ├── api_providers/       # 第三方API提供商
 │   └── claude_code/         # Claude Code集成
@@ -44,20 +35,10 @@ CCLi/
 - 支持多提供商模型路由（OpenAI, Anthropic, OpenRouter, DeepSeek, Ollama, Gemini等）
 - 根据任务类型自动选择最优模型
 - 可配置的路由规则（默认、后台任务、思考、长上下文、编程任务、Claude Code）
-- 特殊支持Claude Code集成
 
-### 个人画像系统 (core/personal_profile.py)
-- 管理用户兴趣、习惯和目标
-- 支持动态更新用户画像
-
-### Agent团队 (agents/)
-1. **讯小智（新闻播报员）**：每日新闻推送和个性化推荐
-2. **时小管（日程规划师）**：日程管理与任务规划
-3. **悟小导（复盘导师）**：晚间引导反思与成长
-
-### 用户界面
-- **CLI界面**：命令行交互，适合快速操作 (ui/cli/ccli.py)
-- **Web UI界面**：图形化界面，功能更丰富，支持实时交互 (ui/web/app.py)
+### 中文UI界面
+- **CLI界面**：命令行交互，适合快速操作 (ui/cli/ccli.py)，全中文提示和响应
+- **Web UI界面**：图形化界面，功能更丰富，支持实时交互 (ui/web/app.py)，全中文界面
 
 ## 构建和运行
 
@@ -68,7 +49,7 @@ CCLi/
 ### 安装步骤
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/DuanZGit/CCLi.git
 cd CCLi
 
 # 创建虚拟环境并安装依赖
@@ -88,6 +69,9 @@ python3 ui/cli/ccli.py chat -m "你好，世界！"
 
 # 与AI对话（思考任务类型）
 python3 ui/cli/ccli.py chat -t think -m "解释量子计算的概念"
+
+# 与AI对话（Claude Code任务类型）
+python3 ui/cli/ccli.py chat -t claudeCode -m "分析当前代码库结构"
 
 # 查看路由配置
 python3 ui/cli/ccli.py route
@@ -118,8 +102,35 @@ python3 -m pytest tests/test_model_router.py -v
 配置文件位于 `~/.ccli/config.json`，主要配置项包括：
 - 模型提供商API密钥
 - 路由规则
-- Agent启用状态
 - UI设置
+
+示例配置：
+```json
+{
+  "Providers": {
+    "openai": {
+      "name": "openai",
+      "api_base_url": "https://api.openai.com/v1",
+      "api_key": "sk-xxx",
+      "models": ["gpt-3.5-turbo", "gpt-4"]
+    },
+    "anthropic": {
+      "name": "anthropic",
+      "api_base_url": "https://api.anthropic.com/v1",
+      "api_key": "sk-xxx",
+      "models": ["claude-3-haiku-20240307", "claude-3-sonnet-20240229"]
+    }
+  },
+  "Router": {
+    "default": "openai,gpt-3.5-turbo",
+    "background": "ollama,llama3",
+    "think": "anthropic,claude-3-sonnet-20240229",
+    "longContext": "gemini,gemini-1.5-pro",
+    "coding": "deepseek,deepseek-coder",
+    "claudeCode": "anthropic,claude-3-opus-20240229"
+  }
+}
+```
 
 ## 开发约定
 
@@ -136,8 +147,3 @@ python3 -m pytest tests/test_model_router.py -v
 3. 实现必要的方法
 4. 在 `integrations/api_providers/__init__.py` 中导出
 5. 更新 `core/model_router.py` 中的初始化逻辑
-
-#### 添加新的Agent
-1. 在 `agents/` 目录下创建新的Agent文件
-2. 实现Agent的核心功能
-3. 在 `main.py` 中集成新的Agent

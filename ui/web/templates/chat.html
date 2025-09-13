@@ -1,1 +1,204 @@
-potentially_problematic_new_string
+{% extends "base.html" %}
+
+{% block title %}聊天 - CCLi{% endblock %}
+
+{% block header %}AI聊天{% endblock %}
+
+{% block content %}
+<div class="chat-container" style="display: flex; flex-direction: column; height: 100%;">
+    <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <div class="message system-message" style="padding: 10px; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 3px solid #3498db;">
+            <div class="message-content" style="display: flex; align-items: center;">
+                <i class="fas fa-robot" style="margin-right: 10px; color: #3498db;"></i>
+                <span>欢迎使用CCLi智能助手！请选择任务类型并开始对话。</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-input-container" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px;">
+        <div class="task-type-selector" style="margin-bottom: 15px;">
+            <label for="task-type" style="display: block; margin-bottom: 5px; font-weight: 500;">任务类型:</label>
+            <select id="task-type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="default">默认</option>
+                <option value="background">后台任务</option>
+                <option value="think">思考</option>
+                <option value="longContext">长上下文</option>
+                <option value="coding">编程</option>
+                <option value="claudeCode">Claude Code</option>
+            </select>
+        </div>
+        
+        <div class="input-group" style="display: flex; gap: 10px;">
+            <input type="text" id="message-input" placeholder="输入您的消息..." style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+            <button id="send-button" style="padding: 12px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+                <i class="fas fa-paper-plane"></i> 发送
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // WebSocket连接
+    let ws = null;
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 连接到WebSocket
+        connectWebSocket();
+        
+        // 发送按钮点击事件
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        
+        // 回车键发送消息
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    });
+    
+    // 连接WebSocket
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = function(event) {
+            console.log('WebSocket连接已建立');
+            addSystemMessage('WebSocket连接已建立');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleWebSocketMessage(data);
+        };
+        
+        ws.onclose = function(event) {
+            console.log('WebSocket连接已关闭');
+            addSystemMessage('WebSocket连接已断开，正在尝试重新连接...');
+            setTimeout(connectWebSocket, 3000);
+        };
+        
+        ws.onerror = function(error) {
+            console.error('WebSocket错误:', error);
+            addSystemMessage('WebSocket连接出错');
+        };
+    }
+    
+    // 发送消息
+    function sendMessage() {
+        const input = document.getElementById('message-input');
+        const taskTypeSelect = document.getElementById('task-type');
+        const message = input.value.trim();
+        
+        if (message && ws && ws.readyState === WebSocket.OPEN) {
+            // 添加用户消息到界面
+            addUserMessage(message);
+            
+            // 清空输入框
+            input.value = '';
+            
+            // 发送消息到服务器
+            const messageData = {
+                type: "chat",
+                task_type: taskTypeSelect.value,
+                content: message
+            };
+            
+            ws.send(JSON.stringify(messageData));
+        }
+    }
+    
+    // 处理WebSocket消息
+    function handleWebSocketMessage(data) {
+        if (data.type === "chat") {
+            addAIMessage(data.content);
+        } else if (data.type === "error") {
+            addSystemMessage("错误: " + data.content);
+        }
+    }
+    
+    // 添加用户消息
+    function addUserMessage(content) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message user-message';
+        messageElement.style.cssText = 'padding: 15px; margin-bottom: 15px; background-color: #e3f2fd; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-end;';
+        
+        const contentElement = document.createElement('div');
+        contentElement.className = 'message-content';
+        contentElement.style.cssText = 'background-color: #2196f3; color: white; padding: 10px 15px; border-radius: 18px; max-width: 80%; word-wrap: break-word;';
+        contentElement.textContent = content;
+        
+        messageElement.appendChild(contentElement);
+        messagesContainer.appendChild(messageElement);
+        
+        // 滚动到底部
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // 添加AI消息
+    function addAIMessage(content) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message ai-message';
+        messageElement.style.cssText = 'padding: 15px; margin-bottom: 15px; background-color: #f5f5f5; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;';
+        
+        const headerElement = document.createElement('div');
+        headerElement.className = 'message-header';
+        headerElement.style.cssText = 'display: flex; align-items: center; margin-bottom: 8px; color: #666; font-size: 0.9em;';
+        
+        const iconElement = document.createElement('i');
+        iconElement.className = 'fas fa-robot';
+        iconElement.style.cssText = 'margin-right: 8px; color: #3498db;';
+        
+        const senderElement = document.createElement('span');
+        senderElement.textContent = 'AI助手';
+        
+        headerElement.appendChild(iconElement);
+        headerElement.appendChild(senderElement);
+        
+        const contentElement = document.createElement('div');
+        contentElement.className = 'message-content';
+        contentElement.style.cssText = 'background-color: white; padding: 12px 15px; border-radius: 18px; max-width: 80%; word-wrap: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.1);';
+        contentElement.textContent = content;
+        
+        messageElement.appendChild(headerElement);
+        messageElement.appendChild(contentElement);
+        messagesContainer.appendChild(messageElement);
+        
+        // 滚动到底部
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // 添加系统消息
+    function addSystemMessage(content) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message system-message';
+        messageElement.style.cssText = 'padding: 10px; margin-bottom: 10px; background-color: #fff3e0; border-radius: 5px; border-left: 3px solid #ff9800;';
+        
+        const contentElement = document.createElement('div');
+        contentElement.className = 'message-content';
+        contentElement.style.cssText = 'display: flex; align-items: center;';
+        
+        const iconElement = document.createElement('i');
+        iconElement.className = 'fas fa-info-circle';
+        iconElement.style.cssText = 'margin-right: 10px; color: #ff9800;';
+        
+        const textElement = document.createElement('span');
+        textElement.textContent = content;
+        
+        contentElement.appendChild(iconElement);
+        contentElement.appendChild(textElement);
+        messageElement.appendChild(contentElement);
+        messagesContainer.appendChild(messageElement);
+        
+        // 滚动到底部
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+</script>
+{% endblock %}
