@@ -1,0 +1,33 @@
+# CCLi Docker Compose 配置文件
+version: '3.8'
+
+services:
+  ccli:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/home/user/app/data
+      - ./config:/home/user/.ccli
+    environment:
+      - PYTHONPATH=/home/user/app
+    depends_on:
+      - ollama
+    networks:
+      - ccli-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - ccli-network
+
+volumes:
+  ollama-data:
+
+networks:
+  ccli-network:
+    driver: bridge

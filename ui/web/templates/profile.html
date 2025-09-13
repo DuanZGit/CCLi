@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}用户画像 - CCLi{% endblock %}
+
+{% block header %}用户画像{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-user-circle"></i> 用户信息
+        </h2>
+        <div id="profile-info">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="interests-section" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-heart"></i> 兴趣偏好
+        </h2>
+        <div id="interests-chart" style="height: 300px; display: flex; align-items: flex-end; gap: 20px; padding: 20px 0;">
+            <!-- 兴趣图表将通过JavaScript动态生成 -->
+        </div>
+    </div>
+    
+    <div class="habits-section" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-calendar-check"></i> 习惯养成
+        </h2>
+        <div id="habits-list">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="goals-section" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-bullseye"></i> 目标追踪
+        </h2>
+        <div id="goals-list">
+            <p>加载中...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 获取用户画像数据
+    async function fetchProfileData() {
+        try {
+            const response = await fetch('/api/profile');
+            const profile = await response.json();
+            
+            // 显示用户基本信息
+            document.getElementById('profile-info').innerHTML = `
+                <p><strong>用户ID:</strong> ${profile.user_id}</p>
+                <p><strong>注册时间:</strong> ${new Date().toLocaleDateString()}</p>
+            `;
+            
+            // 显示兴趣偏好
+            displayInterests(profile.interests);
+            
+            // 显示习惯养成
+            displayHabits(profile.habits);
+            
+            // 显示目标追踪
+            displayGoals(profile.goals);
+        } catch (error) {
+            console.error('获取用户画像数据失败:', error);
+            document.getElementById('profile-info').innerHTML = '<p>获取数据失败</p>';
+        }
+    }
+    
+    // 显示兴趣偏好图表
+    function displayInterests(interests) {
+        const chartContainer = document.getElementById('interests-chart');
+        chartContainer.innerHTML = '';
+        
+        if (Object.keys(interests).length === 0) {
+            chartContainer.innerHTML = '<p>暂无兴趣数据</p>';
+            return;
+        }
+        
+        // 按兴趣值排序
+        const sortedInterests = Object.entries(interests).sort((a, b) => b[1] - a[1]);
+        
+        // 生成柱状图
+        sortedInterests.forEach(([interest, score]) => {
+            const barContainer = document.createElement('div');
+            barContainer.style.display = 'flex';
+            barContainer.style.flexDirection = 'column';
+            barContainer.style.alignItems = 'center';
+            barContainer.style.flex = '1';
+            
+            const bar = document.createElement('div');
+            bar.style.width = '40px';
+            bar.style.height = `${score * 20}px`;
+            bar.style.backgroundColor = '#3498db';
+            bar.style.borderRadius = '4px 4px 0 0';
+            bar.style.marginBottom = '5px';
+            
+            const label = document.createElement('div');
+            label.style.fontSize = '12px';
+            label.style.textAlign = 'center';
+            label.textContent = interest;
+            
+            const scoreLabel = document.createElement('div');
+            scoreLabel.style.fontSize = '12px';
+            scoreLabel.style.textAlign = 'center';
+            scoreLabel.textContent = score;
+            
+            barContainer.appendChild(scoreLabel);
+            barContainer.appendChild(bar);
+            barContainer.appendChild(label);
+            chartContainer.appendChild(barContainer);
+        });
+    }
+    
+    // 显示习惯养成
+    function displayHabits(habits) {
+        const habitsContainer = document.getElementById('habits-list');
+        
+        if (habits.length === 0) {
+            habitsContainer.innerHTML = '<p>暂无习惯数据</p>';
+            return;
+        }
+        
+        let habitsHtml = '<ul style="list-style-type: none; padding: 0;">';
+        habits.forEach(habit => {
+            habitsHtml += `
+                <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <span>${habit}</span>
+                    <button onclick="removeHabit('${habit}')" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </li>
+            `;
+        });
+        habitsHtml += '</ul>';
+        
+        // 添加新习惯表单
+        habitsHtml += `
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <input type="text" id="new-habit-input" placeholder="输入新习惯" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <button onclick="addHabit()" style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-plus"></i> 添加
+                </button>
+            </div>
+        `;
+        
+        habitsContainer.innerHTML = habitsHtml;
+    }
+    
+    // 显示目标追踪
+    function displayGoals(goals) {
+        const goalsContainer = document.getElementById('goals-list');
+        
+        if (goals.length === 0) {
+            goalsContainer.innerHTML = '<p>暂无目标数据</p>';
+            return;
+        }
+        
+        let goalsHtml = '<ul style="list-style-type: none; padding: 0;">';
+        goals.forEach(goal => {
+            goalsHtml += `
+                <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <span>${goal}</span>
+                    <button onclick="removeGoal('${goal}')" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </li>
+            `;
+        });
+        goalsHtml += '</ul>';
+        
+        // 添加新目标表单
+        goalsHtml += `
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <input type="text" id="new-goal-input" placeholder="输入新目标" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <button onclick="addGoal()" style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-plus"></i> 添加
+                </button>
+            </div>
+        `;
+        
+        goalsContainer.innerHTML = goalsHtml;
+    }
+    
+    // 添加习惯
+    function addHabit() {
+        const input = document.getElementById('new-habit-input');
+        const habit = input.value.trim();
+        
+        if (habit) {
+            // 这里应该调用API来添加习惯
+            console.log('添加习惯:', habit);
+            input.value = '';
+            // 重新加载数据
+            fetchProfileData();
+        }
+    }
+    
+    // 删除习惯
+    function removeHabit(habit) {
+        // 这里应该调用API来删除习惯
+        console.log('删除习惯:', habit);
+        // 重新加载数据
+        fetchProfileData();
+    }
+    
+    // 添加目标
+    function addGoal() {
+        const input = document.getElementById('new-goal-input');
+        const goal = input.value.trim();
+        
+        if (goal) {
+            // 这里应该调用API来添加目标
+            console.log('添加目标:', goal);
+            input.value = '';
+            // 重新加载数据
+            fetchProfileData();
+        }
+    }
+    
+    // 删除目标
+    function removeGoal(goal) {
+        // 这里应该调用API来删除目标
+        console.log('删除目标:', goal);
+        // 重新加载数据
+        fetchProfileData();
+    }
+    
+    // 页面加载完成后获取数据
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchProfileData();
+    });
+</script>
+{% endblock %}

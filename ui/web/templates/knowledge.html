@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}知识图谱 - CCLi{% endblock %}
+
+{% block header %}知识图谱{% endblock %}
+
+{% block content %}
+<div class="knowledge-container">
+    <div class="graph-controls" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; display: flex; gap: 10px;">
+        <button onclick="refreshGraph()" style="background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-sync-alt"></i> 刷新
+        </button>
+        <button onclick="expandGraph()" style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-expand"></i> 展开
+        </button>
+        <button onclick="collapseGraph()" style="background-color: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-compress"></i> 收缩
+        </button>
+        <input type="text" id="search-node" placeholder="搜索节点..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <button onclick="searchNode()" style="background-color: #9b59b6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-search"></i> 搜索
+        </button>
+    </div>
+    
+    <div class="graph-container" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; height: 70vh; overflow: hidden;">
+        <div id="knowledge-graph" style="width: 100%; height: 100%; position: relative;">
+            <!-- 知识图谱将通过JavaScript动态生成 -->
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="node-details" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-top: 20px;">
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">
+            <i class="fas fa-info-circle"></i> 节点详情
+        </h3>
+        <div id="node-info">
+            <p>请选择一个节点查看详细信息</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let graphData = {};
+    
+    // 获取知识图谱数据
+    async function fetchGraphData() {
+        try {
+            const response = await fetch('/api/knowledge-graph');
+            graphData = await response.json();
+            renderGraph();
+        } catch (error) {
+            console.error('获取知识图谱数据失败:', error);
+            document.getElementById('knowledge-graph').innerHTML = '<p>获取数据失败</p>';
+        }
+    }
+    
+    // 渲染知识图谱
+    function renderGraph() {
+        const graphContainer = document.getElementById('knowledge-graph');
+        graphContainer.innerHTML = '';
+        
+        if (Object.keys(graphData).length === 0) {
+            graphContainer.innerHTML = '<p>暂无知识图谱数据</p>';
+            return;
+        }
+        
+        // 创建一个简单的节点布局
+        const nodes = Object.keys(graphData);
+        const containerWidth = graphContainer.clientWidth;
+        const containerHeight = graphContainer.clientHeight;
+        
+        // 计算节点位置
+        const nodePositions = {};
+        const centerX = containerWidth / 2;
+        const centerY = containerHeight / 2;
+        const radius = Math.min(centerX, centerY) * 0.8;
+        
+        nodes.forEach((node, index) => {
+            const angle = (index / nodes.length) * 2 * Math.PI;
+            nodePositions[node] = {
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle)
+            };
+        });
+        
+        // 绘制节点和连接线
+        nodes.forEach(node => {
+            const pos = nodePositions[node];
+            const connections = graphData[node].connections_count || 0;
+            
+            // 创建节点元素
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'graph-node';
+            nodeElement.style.position = 'absolute';
+            nodeElement.style.left = `${pos.x - 30}px`;
+            nodeElement.style.top = `${pos.y - 30}px`;
+            nodeElement.style.width = '60px';
+            nodeElement.style.height = '60px';
+            nodeElement.style.backgroundColor = '#3498db';
+            nodeElement.style.borderRadius = '50%';
+            nodeElement.style.display = 'flex';
+            nodeElement.style.alignItems = 'center';
+            nodeElement.style.justifyContent = 'center';
+            nodeElement.style.color = 'white';
+            nodeElement.style.fontWeight = 'bold';
+            nodeElement.style.cursor = 'pointer';
+            nodeElement.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+            nodeElement.style.transition = 'all 0.3s ease';
+            
+            // 节点内容
+            nodeElement.innerHTML = `
+                <div style="text-align: center; font-size: 12px;">
+                    <div>${connections}</div>
+                    <div style="font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px;">${node}</div>
+                </div>
+            `;
+            
+            // 添加点击事件
+            nodeElement.addEventListener('click', function() {
+                showNodeDetails(node, connections);
+                // 高亮选中的节点
+                document.querySelectorAll('.graph-node').forEach(n => {
+                    n.style.backgroundColor = '#3498db';
+                });
+                this.style.backgroundColor = '#e74c3c';
+            });
+            
+            graphContainer.appendChild(nodeElement);
+        });
+    }
+    
+    // 显示节点详情
+    function showNodeDetails(node, connections) {
+        const nodeInfo = document.getElementById('node-info');
+        nodeInfo.innerHTML = `
+            <h4>${node}</h4>
+            <p><strong>关联节点数:</strong> ${connections}</p>
+            <p><strong>创建时间:</strong> ${new Date().toLocaleString()}</p>
+            <div style="margin-top: 15px;">
+                <button onclick="addRelatedNode('${node}')" style="background-color: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                    <i class="fas fa-link"></i> 添加关联
+                </button>
+                <button onclick="removeNode('${node}')" style="background-color: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-trash"></i> 删除节点
+                </button>
+            </div>
+        `;
+    }
+    
+    // 刷新图谱
+    function refreshGraph() {
+        fetchGraphData();
+    }
+    
+    // 展开图谱
+    function expandGraph() {
+        alert('展开功能将在后续版本中实现');
+    }
+    
+    // 收缩图谱
+    function collapseGraph() {
+        alert('收缩功能将在后续版本中实现');
+    }
+    
+    // 搜索节点
+    function searchNode() {
+        const searchTerm = document.getElementById('search-node').value.trim().toLowerCase();
+        if (searchTerm) {
+            alert(`搜索功能将在后续版本中实现，搜索词: ${searchTerm}`);
+        }
+    }
+    
+    // 添加关联节点
+    function addRelatedNode(node) {
+        const relatedNode = prompt(`为 "${node}" 添加关联节点:`);
+        if (relatedNode) {
+            // 这里应该调用API来添加关联节点
+            console.log(`添加关联: ${node} -> ${relatedNode}`);
+            // 重新加载数据
+            fetchGraphData();
+        }
+    }
+    
+    // 删除节点
+    function removeNode(node) {
+        if (confirm(`确定要删除节点 "${node}" 吗?`)) {
+            // 这里应该调用API来删除节点
+            console.log(`删除节点: ${node}`);
+            // 重新加载数据
+            fetchGraphData();
+        }
+    }
+    
+    // 页面加载完成后获取数据
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchGraphData();
+    });
+</script>
+{% endblock %}

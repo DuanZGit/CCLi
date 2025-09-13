@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}设置 - CCLi{% endblock %}
+
+{% block header %}系统设置{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-section" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-sliders-h"></i> 模型路由配置
+        </h2>
+        <div id="routes-config">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="settings-section" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-key"></i> API密钥管理
+        </h2>
+        <div id="api-keys-config">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="settings-section" style="background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px;">
+        <h2 style="margin-bottom: 20px; color: #2c3e50;">
+            <i class="fas fa-cogs"></i> 系统配置
+        </h2>
+        <div id="system-config">
+            <p>加载中...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 获取路由配置数据
+    async function fetchRoutesConfig() {
+        try {
+            const response = await fetch('/api/routes');
+            const routesData = await response.json();
+            
+            // 显示提供商配置
+            displayProvidersConfig(routesData.providers);
+            
+            // 显示路由规则
+            displayRoutesConfig(routesData.routes);
+        } catch (error) {
+            console.error('获取路由配置失败:', error);
+            document.getElementById('routes-config').innerHTML = '<p>获取数据失败</p>';
+        }
+    }
+    
+    // 显示提供商配置
+    function displayProvidersConfig(providers) {
+        let providersHtml = `
+            <h3>API提供商</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">名称</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">API地址</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">状态</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        for (const [name, provider] of Object.entries(providers)) {
+            providersHtml += `
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${provider.name}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${provider.api_base_url}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <span style="color: #27ae60;">✓ 已配置</span>
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <button onclick="editProvider('${name}')" style="background-color: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button onclick="removeProvider('${name}')" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        providersHtml += `
+                </tbody>
+            </table>
+            <button onclick="addProvider()" style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                <i class="fas fa-plus"></i> 添加提供商
+            </button>
+        `;
+        
+        document.getElementById('routes-config').innerHTML = providersHtml;
+    }
+    
+    // 显示路由规则
+    function displayRoutesConfig(routes) {
+        let routesHtml = `
+            <h3 style="margin-top: 30px;">路由规则</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">任务类型</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">路由配置</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        for (const [taskType, route] of Object.entries(routes)) {
+            routesHtml += `
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${taskType}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${route}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <button onclick="editRoute('${taskType}')" style="background-color: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        routesHtml += `
+                </tbody>
+            </table>
+        `;
+        
+        document.getElementById('routes-config').innerHTML += routesHtml;
+    }
+    
+    // 获取API密钥配置
+    async function fetchApiKeysConfig() {
+        try {
+            // 这里应该从配置文件或环境变量中获取API密钥信息
+            const apiKeysData = {
+                openai: { name: "OpenAI", configured: true },
+                anthropic: { name: "Anthropic", configured: true },
+                openrouter: { name: "OpenRouter", configured: false },
+                deepseek: { name: "DeepSeek", configured: false },
+                gemini: { name: "Gemini", configured: false }
+            };
+            
+            displayApiKeysConfig(apiKeysData);
+        } catch (error) {
+            console.error('获取API密钥配置失败:', error);
+            document.getElementById('api-keys-config').innerHTML = '<p>获取数据失败</p>';
+        }
+    }
+    
+    // 显示API密钥配置
+    function displayApiKeysConfig(apiKeys) {
+        let apiKeysHtml = `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">服务提供商</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">状态</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        for (const [key, provider] of Object.entries(apiKeys)) {
+            apiKeysHtml += `
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${provider.name}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        ${provider.configured ? 
+                            '<span style="color: #27ae60;">✓ 已配置</span>' : 
+                            '<span style="color: #e74c3c;">✗ 未配置</span>'}
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <button onclick="configureApiKey('${key}')" style="background-color: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            <i class="fas fa-key"></i> ${provider.configured ? '更新' : '配置'}
+                        </button>
+                        ${provider.configured ? 
+                            `<button onclick="removeApiKey('${key}')" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>` : ''}
+                    </td>
+                </tr>
+            `;
+        }
+        
+        apiKeysHtml += `
+                </tbody>
+            </table>
+        `;
+        
+        document.getElementById('api-keys-config').innerHTML = apiKeysHtml;
+    }
+    
+    // 获取系统配置
+    async function fetchSystemConfig() {
+        try {
+            // 这里应该从配置文件中获取系统配置信息
+            const systemConfig = {
+                log_enabled: true,
+                log_level: "debug",
+                auto_save: true,
+                theme: "light"
+            };
+            
+            displaySystemConfig(systemConfig);
+        } catch (error) {
+            console.error('获取系统配置失败:', error);
+            document.getElementById('system-config').innerHTML = '<p>获取数据失败</p>';
+        }
+    }
+    
+    // 显示系统配置
+    function displaySystemConfig(config) {
+        const systemConfigHtml = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h4>日志设置</h4>
+                    <div style="margin: 10px 0;">
+                        <label style="display: flex; align-items: center;">
+                            <input type="checkbox" ${config.log_enabled ? 'checked' : ''} style="margin-right: 10px;">
+                            启用日志记录
+                        </label>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <label>日志级别:</label>
+                        <select style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option ${config.log_level === 'debug' ? 'selected' : ''} value="debug">调试 (Debug)</option>
+                            <option ${config.log_level === 'info' ? 'selected' : ''} value="info">信息 (Info)</option>
+                            <option ${config.log_level === 'warn' ? 'selected' : ''} value="warn">警告 (Warn)</option>
+                            <option ${config.log_level === 'error' ? 'selected' : ''} value="error">错误 (Error)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h4>数据设置</h4>
+                    <div style="margin: 10px 0;">
+                        <label style="display: flex; align-items: center;">
+                            <input type="checkbox" ${config.auto_save ? 'checked' : ''} style="margin-right: 10px;">
+                            自动保存数据
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h4>界面设置</h4>
+                    <div style="margin: 10px 0;">
+                        <label>主题:</label>
+                        <select style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option ${config.theme === 'light' ? 'selected' : ''} value="light">浅色主题</option>
+                            <option ${config.theme === 'dark' ? 'selected' : ''} value="dark">深色主题</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: right;">
+                <button onclick="saveSystemConfig()" style="background-color: #27ae60; color: white; border: none; padding: 12px 30px; border-radius: 4px; cursor: pointer; font-size: 16px;">
+                    <i class="fas fa-save"></i> 保存设置
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('system-config').innerHTML = systemConfigHtml;
+    }
+    
+    // 添加提供商
+    function addProvider() {
+        alert('添加提供商功能将在后续版本中实现');
+    }
+    
+    // 编辑提供商
+    function editProvider(providerName) {
+        alert(`编辑提供商 "${providerName}" 功能将在后续版本中实现`);
+    }
+    
+    // 删除提供商
+    function removeProvider(providerName) {
+        if (confirm(`确定要删除提供商 "${providerName}" 吗?`)) {
+            alert('删除提供商功能将在后续版本中实现');
+        }
+    }
+    
+    // 编辑路由
+    function editRoute(taskType) {
+        alert(`编辑路由 "${taskType}" 功能将在后续版本中实现`);
+    }
+    
+    // 配置API密钥
+    function configureApiKey(providerKey) {
+        const apiKey = prompt(`请输入 ${providerKey} 的API密钥:`);
+        if (apiKey) {
+            // 这里应该调用API来保存API密钥
+            console.log(`配置API密钥: ${providerKey} = ${apiKey}`);
+            // 重新加载数据
+            fetchApiKeysConfig();
+        }
+    }
+    
+    // 删除API密钥
+    function removeApiKey(providerKey) {
+        if (confirm(`确定要删除 ${providerKey} 的API密钥吗?`)) {
+            // 这里应该调用API来删除API密钥
+            console.log(`删除API密钥: ${providerKey}`);
+            // 重新加载数据
+            fetchApiKeysConfig();
+        }
+    }
+    
+    // 保存系统配置
+    function saveSystemConfig() {
+        alert('系统配置已保存');
+    }
+    
+    // 页面加载完成后获取数据
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchRoutesConfig();
+        fetchApiKeysConfig();
+        fetchSystemConfig();
+    });
+</script>
+{% endblock %}
