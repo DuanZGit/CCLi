@@ -1,0 +1,8 @@
+#!/bin/bash
+# CCLi 启动脚本
+
+# 激活虚拟环境
+source /hey/CCLi/venv/bin/activate
+
+# 运行CLI程序
+python /hey/CCLi/ui/cli/ccli.py "$@"

@@ -45,46 +45,26 @@ CCLi/
 └── start_web_ui.sh          # Web UI启动脚本
 ```
 
-## 一键部署
-
-### Linux/macOS 一键部署
-
-```bash
-# 下载并运行一键部署脚本
-curl -s https://raw.githubusercontent.com/DuanZGit/CCLi/main/deploy.sh | bash
-```
-
-### Windows 一键部署
-
-```powershell
-# 下载并运行一键部署脚本
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/DuanZGit/CCLi/main/deploy.ps1" -OutFile "deploy.ps1"
-.\deploy.ps1
-```
-
-### Docker 部署
-
-```bash
-# 使用 Docker Compose (推荐)
-docker-compose up -d
-
-# 或者单独构建和运行
-docker build -t ccli .
-docker run -p 8000:8000 ccli
-```
-
-详细部署说明请查看 [DEPLOYMENT.md](DEPLOYMENT.md)
-
 ## 安装与使用
 
-### 环境要求
-- Python 3.8+
-- 相关依赖包
+### 快速安装
 
-### 手动安装步骤
-1. 克隆项目到本地
-2. 安装依赖包
-3. 配置API密钥
+```bash
+# 克隆项目
+git clone https://github.com/DuanZGit/CCLi.git
+cd CCLi
+
+# 运行安装脚本
+./install.sh
+```
+
+安装脚本会自动完成以下操作：
+1. 创建Python虚拟环境
+2. 安装项目依赖
+3. 创建配置文件
+4. 设置全局命令
+
+### 手动安装
 
 ```bash
 # 克隆项目
@@ -96,33 +76,48 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# 运行主程序
-python3 main.py
+# 创建配置目录
+mkdir -p ~/.ccli
+
+# 创建基本配置文件
+echo '{"Providers": {"openai": {"name": "openai", "api_base_url": "https://api.openai.com/v1", "api_key": "sk-xxx", "models": ["gpt-3.5-turbo", "gpt-4"]}}, "Router": {"default": "openai,gpt-3.5-turbo"}}' > ~/.ccli/config.json
+```
+
+### 使用CLI
+
+安装完成后，您可以通过以下方式使用CLI：
+
+```bash
+# 方法1: 使用项目目录中的命令
+./ccli --help
+
+# 方法2: 添加到PATH后使用全局命令
+ccli --help
 ```
 
 ### CLI界面使用
 
 ```bash
 # 查看帮助信息
-python3 ui/cli/ccli.py --help
+./ccli --help
 
 # 与AI对话（默认任务类型）
-python3 ui/cli/ccli.py chat -m "你好，世界！"
+./ccli chat -m "你好，世界！"
 
 # 与AI对话（思考任务类型）
-python3 ui/cli/ccli.py chat -t think -m "解释量子计算的概念"
+./ccli chat -t think -m "解释量子计算的概念"
 
 # 与AI对话（编程任务类型）
-python3 ui/cli/ccli.py chat -t coding -m "用Python写一个快速排序算法"
+./ccli chat -t coding -m "用Python写一个快速排序算法"
 
 # 与AI对话（Claude Code任务类型）
-python3 ui/cli/ccli.py chat -t claudeCode -m "分析当前代码库结构"
+./ccli chat -t claudeCode -m "分析当前代码库结构"
 
 # 与AI对话（长上下文任务类型）
-python3 ui/cli/ccli.py chat -t longContext -m "总结这份长文档的主要内容"
+./ccli chat -t longContext -m "总结这份长文档的主要内容"
 
 # 查看路由配置
-python3 ui/cli/ccli.py route
+./ccli route
 ```
 
 ### Web UI界面使用
@@ -132,7 +127,7 @@ python3 ui/cli/ccli.py route
 ./start_web_ui.sh
 
 # 或者直接运行
-python3 ui/web/app.py
+./ccli web
 
 # 然后在浏览器中访问 http://localhost:8000
 ```
@@ -177,10 +172,13 @@ python3 ui/web/app.py
 ### 运行测试
 ```bash
 # 运行所有测试
-python3 -m pytest tests/
+./ccli test
+
+# 或者
+python -m pytest tests/
 
 # 运行特定测试
-python3 -m pytest tests/test_model_router.py -v
+python -m pytest tests/test_model_router.py -v
 ```
 
 ### 扩展功能
