@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# CCLi 安装脚本
+# CCLi 简化版安装脚本
 # 作者: CCLi Team
 # 日期: 2025年9月14日
 
 set -e  # 遇到错误时退出
 
 echo "========================================"
-echo "        CCLi 安装脚本"
+echo "        CCLi 简化版安装脚本"
 echo "========================================"
 echo ""
 
@@ -66,11 +66,7 @@ pip install --upgrade pip
 
 # 安装依赖
 echo "安装项目依赖..."
-if [[ "$SYSTEM" == "Linux" ]]; then
-    pip install -r requirements.txt
-else
-    pip install -r requirements.txt
-fi
+pip install -r requirements.txt
 
 # 创建配置目录
 echo "创建配置目录..."
@@ -131,21 +127,6 @@ EOF
 
 # 创建全局命令链接
 echo "创建全局命令..."
-# 创建 ccli 命令脚本
-cat > "$PROJECT_DIR/ccli" << 'EOF'
-#!/bin/bash
-# CCLi 全局命令脚本
-
-# 获取脚本所在目录
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# 激活虚拟环境
-source "$SCRIPT_DIR/venv/bin/activate"
-
-# 运行CLI程序
-python "$SCRIPT_DIR/ui/cli/ccli.py" "$@"
-EOF
-
 # 给脚本添加执行权限
 chmod +x "$PROJECT_DIR/ccli"
 
@@ -158,9 +139,6 @@ if [[ "$SYSTEM" == "Linux" || "$SYSTEM" == "macOS" ]]; then
     ln -sf "$PROJECT_DIR/ccli" "$HOME/.local/bin/ccli"
     echo "已创建命令链接: $HOME/.local/bin/ccli"
     echo "请确保 $HOME/.local/bin 在您的 PATH 环境变量中"
-    echo "您可以通过运行以下命令将其添加到 PATH:"
-    echo "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
-    echo "source ~/.bashrc"
 fi
 
 # 运行测试
@@ -177,8 +155,8 @@ echo "项目已安装到: $PROJECT_DIR"
 echo "配置文件位置: $HOME/.ccli/config.json"
 echo ""
 echo "使用方法:"
-echo "  1. 直接运行: $PROJECT_DIR/ccli --help"
-echo "  2. 或者添加到PATH后运行: ccli --help"
+echo "  直接运行: ccli"
+echo "  这将直接进入Claude Code模式"
 echo ""
 echo "请编辑 $HOME/.ccli/config.json 文件添加您的 API 密钥"
 echo ""

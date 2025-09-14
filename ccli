@@ -1,8 +1,11 @@
 #!/bin/bash
-# CCLi 启动脚本
+# CCLi 全局命令脚本
+
+# 获取脚本所在目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 激活虚拟环境
-source /hey/CCLi/venv/bin/activate
+source "$SCRIPT_DIR/venv/bin/activate"
 
-# 运行CLI程序
-python /hey/CCLi/ui/cli/ccli.py "$@"
+# 运行简化版CLI程序
+python "$SCRIPT_DIR/ui/cli/ccli_simple.py" "$@"
