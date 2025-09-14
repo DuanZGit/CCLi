@@ -165,19 +165,19 @@ def handle_claude_command(command: str) -> str:
     try:
         if command == "analyze":
             analysis = claude_code_integration.analyze_codebase()
-            return f"代码库分析完成：\n文件数: {len(analysis.get('files', []))}\n目录数: {len(analysis.get('directories', []))}\n总大小: {analysis.get('size', 0)} bytes"
+            return f"代码库分析完成：\\n文件数: {len(analysis.get('files', []))}\\n目录数: {len(analysis.get('directories', []))}\\n总大小: {analysis.get('size', 0)} bytes"
         elif command == "plan":
             plan = claude_code_integration.plan_implementation("用户请求的功能实现")
-            return f"实施计划：\n{plan}"
+            return f"实施计划：\\n{plan}"
         elif command == "doc":
             doc = claude_code_integration.generate_documentation("项目功能说明", "readme")
-            return f"文档生成完成：\n{doc}"
+            return f"文档生成完成：\\n{doc}"
         elif command == "test":
             # 这里应该生成测试代码的示例
             return "测试代码生成功能已调用。在完整实现中，将生成针对项目代码的单元测试。"
         elif command == "review":
             review = claude_code_integration.review_code()
-            return f"代码审查结果：\n{review}"
+            return f"代码审查结果：\\n{review}"
         else:
             return f"未知的Claude Code命令: {command}"
     except Exception as e:

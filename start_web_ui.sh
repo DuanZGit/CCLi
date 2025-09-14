@@ -1,11 +1,11 @@
 #!/bin/bash
-# CCLi Web UI 启动脚本
+# CCLi Web UI 启动脚本（简化版）
 
 # 获取脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 切换到项目根目录
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/../.."
 
 # 检查是否在项目根目录
 if [ ! -f "main.py" ]; then
@@ -22,7 +22,7 @@ else
 fi
 
 # 启动Web UI
-echo "启动CCLi Web UI..."
+echo "启动CCLi Web UI (简化版)..."
 echo "访问地址: http://localhost:8000"
 echo "按 Ctrl+C 停止服务"
 
@@ -32,16 +32,5 @@ python3 ui/web/app.py &
 # 保存进程ID
 WEB_UI_PID=$!
 
-# 等待用户按键或进程结束
-echo "Web UI已在后台启动，PID: $WEB_UI_PID"
-echo "您可以访问 http://localhost:8000 使用Web界面"
-echo "按回车键停止Web服务..."
-
-# 等待用户输入
-read
-
-# 停止Web服务
-echo "正在停止Web服务..."
-kill $WEB_UI_PID 2>/dev/null
-
-echo "Web服务已停止"
+# 等待进程结束
+wait $WEB_UI_PID

@@ -8,6 +8,7 @@ CCLi - Claude Code CLI 简化版
 
 import sys
 import os
+import subprocess
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,6 +35,7 @@ def main():
         print("  doc        - 生成文档")
         print("  test       - 生成测试代码")
         print("  review     - 代码审查")
+        print("  web        - 启动Web UI界面")
         print("  help       - 显示帮助信息")
         print("  exit       - 退出程序")
         print("")
@@ -53,6 +55,7 @@ def main():
                     print("  doc        - 生成文档")
                     print("  test       - 生成测试代码")
                     print("  review     - 代码审查")
+                    print("  web        - 启动Web UI界面")
                     print("  help       - 显示帮助信息")
                     print("  exit       - 退出程序")
                 elif command == "analyze":
@@ -96,6 +99,24 @@ def main():
                         print(review)
                     except Exception as e:
                         print(f"代码审查时出错: {e}")
+                elif command == "web":
+                    print("正在启动Web UI...")
+                    try:
+                        # 启动Web UI
+                        web_ui_script = os.path.join(project_root, "start_web_ui.sh")
+                        if os.path.exists(web_ui_script):
+                            subprocess.Popen(["bash", web_ui_script])
+                            print("Web UI已启动，请在浏览器中访问 http://localhost:8000")
+                        else:
+                            # 直接运行Web应用
+                            web_app = os.path.join(project_root, "ui", "web", "app.py")
+                            if os.path.exists(web_app):
+                                subprocess.Popen([sys.executable, web_app])
+                                print("Web UI已启动，请在浏览器中访问 http://localhost:8000")
+                            else:
+                                print("错误: 找不到Web UI文件")
+                    except Exception as e:
+                        print(f"启动Web UI时出错: {e}")
                 elif command == "":
                     # 空命令，继续循环
                     continue
@@ -104,10 +125,12 @@ def main():
                     print("输入 'help' 查看支持的命令")
                     
             except KeyboardInterrupt:
-                print("\n再见!")
+                print("
+再见!")
                 break
             except EOFError:
-                print("\n再见!")
+                print("
+再见!")
                 break
                 
     except ImportError as e:
