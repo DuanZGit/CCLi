@@ -1,0 +1,77 @@
+app:
+  name: "CCLi - Claude Code CLI"
+  version: "1.0.0"
+  description: "个人助理AI系统，集成Claude Code Router功能"
+
+core:
+  profile_storage: "~/.ccli/profile.json"
+  event_storage: "~/.ccli/events.json"
+  knowledge_storage: "~/.ccli/knowledge.json"
+
+router:
+  config_path: "~/.ccli/router_config.json"
+  default_provider: "openai"
+  default_model: "gpt-3.5-turbo"
+
+agents:
+  xun_xiao_zhi:
+    enabled: true
+    news_sources:
+      - "weibo"
+      - "zhihu"
+      - "toutiao"
+      - "baidu"
+  shi_xiao_guan:
+    enabled: true
+    schedule_sources:
+      - "calendar"
+      - "todo"
+  wu_xiao_dao:
+    enabled: true
+    reflection_time: "21:00"
+
+ui:
+  cli:
+    theme: "default"
+    language: "zh-CN"
+  web:
+    port: 3456
+    host: "localhost"
+
+logging:
+  level: "INFO"
+  file: "~/.ccli/logs/ccli.log"
+  max_size: "10MB"
+  backup_count: 5
+
+# 默认模型路由配置
+Providers:
+  - name: "openai"
+    api_base_url: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    models:
+      - "gpt-3.5-turbo"
+      - "gpt-4"
+      - "gpt-4-turbo"
+  
+  - name: "anthropic"
+    api_base_url: "https://api.anthropic.com/v1"
+    api_key: "${ANTHROPIC_API_KEY}"
+    models:
+      - "claude-3-haiku-20240307"
+      - "claude-3-sonnet-20240229"
+      - "claude-3-opus-20240229"
+
+  - name: "openrouter"
+    api_base_url: "https://openrouter.ai/api/v1"
+    api_key: "${OPENROUTER_API_KEY}"
+    models:
+      - "google/gemini-pro"
+      - "anthropic/claude-3-haiku"
+      - "mistralai/mistral-7b-instruct"
+
+Router:
+  default: "openai,gpt-3.5-turbo"
+  background: "openai,gpt-3.5-turbo"
+  think: "anthropic,claude-3-sonnet-20240229"
+  longContext: "openrouter,google/gemini-pro"
